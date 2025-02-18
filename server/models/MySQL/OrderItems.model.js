@@ -8,6 +8,10 @@ const OrderItems = sequelize.define("orderItem", {
         primaryKey: true,
         autoIncrement: true
     },
+    quantity: {
+        type: Sequelize.INTEGER,
+        allowNull: false
+    }
 })
 
 module.exports = OrderItems;

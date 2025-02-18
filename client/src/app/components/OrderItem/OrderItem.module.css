@@ -1,0 +1,27 @@
+.card2 {
+  box-shadow: 1px 1px 3px 0px rgb(112, 115, 139);
+}
+
+.faCircle.active {
+  font-size: 8px;
+  color: #ab47bc;
+}
+
+.faCircle {
+  font-size: 8px;
+  color: #aaa;
+}
+
+.rounded {
+  border-radius: 2.25rem !important;
+}
+
+.progressBar {
+    background-color: #AB47BC !important;
+}
+
+
+.progress {
+    height: 5px !important;
+    margin-bottom: 0;
+}

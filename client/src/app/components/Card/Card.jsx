@@ -13,7 +13,7 @@ const Card = ({ product, deleteProduct }) => {
                 if (res.status == 200) {
                     console.log("added to the cart");
                 } else {
-                    console.error(res.message);
+                    console.error(res.data.message);
                 }
             })
             .catch((error) => {

@@ -7,10 +7,6 @@ const Orders = sequelize.define("order", {
         autoIncrement: true,
         primaryKey: true,
         allowNull: false,
-    },
-    orderQuantity: {
-        type: Sequelize.INTEGER,
-        allowNull: false
     }
 })
 

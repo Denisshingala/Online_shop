@@ -21,7 +21,10 @@ export default function Header() {
                             <Link className={`nav-link ${styles.navLink} ${pathname == "/add-product" ? styles.active : ""}`} aria-current="page" href="/add-product">Add product</Link>
                         </li>
                         <li className="nav-item">
-                            <Link className={`nav-link ${styles.navLink} ${pathname == "/cart" ? styles.active : ""}`} aria-current="page" href="/cart">Add to cart</Link>
+                            <Link className={`nav-link ${styles.navLink} ${pathname == "/cart" ? styles.active : ""}`} aria-current="page" href="/cart">Your cart</Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link className={`nav-link ${styles.navLink} ${pathname == "/order-history" ? styles.active : ""}`} aria-current="page" href="/order-history">Order history</Link>
                         </li>
                     </ul>
                 </div>

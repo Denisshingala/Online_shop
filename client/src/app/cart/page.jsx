@@ -49,6 +49,21 @@ const Cart = () => {
             });
     }
 
+    const placeOrder = async (event) => {
+        event.preventDefault();
+        await axiosInstance.post("/product/place-order", cartItems)
+            .then((res) => {
+                if (res.status == 200) {
+                    setCartItems([]);
+                } else {
+                    console.error(res.data.message);
+                }
+            })
+            .catch((error) => {
+                console.error(error);
+            });
+    }
+
     return (
         <>
             <Header />
@@ -57,16 +72,19 @@ const Cart = () => {
                     <Loading />
                     :
                     (
-                        <div className="d-flex justify-content-center align-items-center flex-wrap">
-                            {
-                                cartItems.length > 0 ?
-                                    cartItems.map((cartItem, index) => {
-                                        return <CartItemCard item={cartItem} key={index} removeCart={removeCart} />
-                                    })
-                                    :
-                                    <h1 className='text-center text-secondary'>Your cart is an empty!!</h1>
-                            }
-                        </div>
+                        <>
+                            <div className="d-flex justify-content-center align-items-center flex-wrap">
+                                {
+                                    cartItems.length > 0 ?
+                                        cartItems.map((cartItem, index) => {
+                                            return <CartItemCard item={cartItem} key={index} removeCart={removeCart} />
+                                        })
+                                        :
+                                        <h1 className='text-center text-secondary'>Your cart is an empty!!</h1>
+                                }
+                            </div>
+                            {cartItems.length > 0 && <div className='m-auto w-25'><button className="btn btn-primary form-control" onClick={placeOrder}>Place order!</button></div>}
+                        </>
                     )
             }
         </>

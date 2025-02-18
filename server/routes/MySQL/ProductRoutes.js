@@ -201,6 +201,69 @@ productRoutes.delete("/remove-from-cart/:id", async (req, res) => {
         console.log(error);
         res.status(500).json({ message: "Something went wrong !!", "status": 500 })
     }
-})
+});
+
+productRoutes.post("/place-order", async (req, res) => {
+    try {
+        const cartItem = req.body;
+        const user = await Users.findByPk(1);
+
+        user.getCarts()
+            .then((cart) => {
+                if (cart.length > 0) {
+                    cart[0].getProducts()
+                        .then((product) => {
+                            return product;
+                        })
+                        .then((products) => {
+                            user.createOrder()
+                                .then((order) => {
+                                    order.setProducts(products.map((product) => {
+                                        product.orderItem = { quantity: product.cartItem.quantity }
+                                        return product;
+                                    }));
+                                    return order;
+                                })
+                                .catch((error) => {
+                                    console.log(error);
+                                    res.status(500).json({ message: "Something went wrong!" });
+                                });
+                            cart[0].setProducts(null);
+                            res.status(200).json({ message: "Your order has been placed!" });
+                        })
+                        .catch((error) => {
+                            console.log(error);
+                        });
+                } else {
+                    res.status(200).json({ message: "Your order is an empty!" });
+                }
+            })
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Something went wrong!", status: 500 });
+    }
+});
+
+productRoutes.get("/order-history", async (req, res) => {
+    try {
+        const user = await Users.findByPk(1);
+
+        user.getOrders({
+            include: [{
+                model: Products,
+            }]
+        })
+            .then((order) => {
+                res.status(200).json({ message: "Order details!", order: order });
+            })
+            .catch((error) => {
+                console.error(error);
+                res.status(500).json({ message: "Something went wrong!", status: 500 });
+            })
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Something went wrong!", status: 500 });
+    }
+});
 
 module.exports = productRoutes;
