@@ -7,7 +7,6 @@ const cookieParser = require("cookie-parser");
 // const sequelize = require("./utils/mysql/connection");
 // const productRoutes = require("./routes/MySQL/ProductRoutes");
 const userRoutes = require("./routes/MySQL/UserRoutes");
-const Users = require("./models/MySQL/Users.model");
 const User = require("./models/MongoDB/Users.model");
 
 require("./models/MySQL/associations.model");
