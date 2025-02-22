@@ -8,7 +8,7 @@ export default function Header() {
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light mb-3">
             <div className="container-fluid">
-                <div className="navbar-brand"><img src="/images/e-commerce.png" alt="" className="img-fluid" width={100}/></div>
+                <div className="navbar-brand"><img src="/images/e-commerce.png" alt="" className="img-fluid" width={100} /></div>
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span className="navbar-toggler-icon"></span>
                 </button>
@@ -27,6 +27,9 @@ export default function Header() {
                             <Link className={`nav-link ${styles.navLink} ${pathname == "/order-history" ? styles.active : ""}`} aria-current="page" href="/order-history">Order history</Link>
                         </li>
                     </ul>
+                    <div className="d-flex me-5 pe-5">
+                        <Link href="/login" className="btn btn-outline-success btn-sm" >Login</Link>
+                    </div>
                 </div>
             </div>
         </nav>

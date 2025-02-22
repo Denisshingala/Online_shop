@@ -3,7 +3,6 @@ import OrderItem from '../OrderItem/OrderItem'
 import styles from './Order.module.css'
 
 const Order = ({ order }) => {
-    console.log(order);
     return (
         <>
             {

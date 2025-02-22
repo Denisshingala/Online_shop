@@ -25,10 +25,6 @@ const UserSchema = new mongoose.Schema({
                 type: Number,
                 require: true,
                 default: 1
-            },
-            price: {
-                type: Number,
-                require: true
             }
         }]
     }

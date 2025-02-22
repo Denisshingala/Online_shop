@@ -1,6 +1,7 @@
 const express = require("express");
 const Products = require("../../models/MongoDB/Products.model");
 const User = require("../../models/MongoDB/Users.model");
+const Orders = require("../../models/MongoDB/Orders.model");
 
 const ProductRoutes = express.Router();
 
@@ -79,9 +80,9 @@ ProductRoutes.get("/get-cart-items", async (req, res) => {
         const user = await User.findOne({ email: "denisshingala@gmail.com" }).populate("cart.items.productId");
         const items = user.cart.items.map((item) => {
             return {
-                quantity: item.quantity,
-                productPrice: item.price,
                 _id: item.productId._id,
+                quantity: item.quantity,
+                productPrice: item.productId.productPrice,
                 productName: item.productId.productName,
                 productURL: item.productId.productURL,
                 productDescription: item.productId.productDescription,
@@ -98,22 +99,18 @@ ProductRoutes.post("/add-to-cart", async (req, res) => {
     try {
         const { productId } = req.body;
         const user = await User.findOne({ email: "denisshingala@gmail.com" });
-        const product = await Products.findById(productId);
 
         const cartItems = user.cart.items;
         const productIndex = cartItems.findIndex((item) => {
             return item.productId == productId;
         });
-        console.log(productIndex);
 
         if (productIndex >= 0) {
             cartItems[productIndex].quantity += 1;
-            cartItems[productIndex].price = product.productPrice;
         } else {
             cartItems.push({
                 productId: productId,
-                quantity: 1,
-                price: product.productPrice
+                quantity: 1
             });
         }
 
@@ -136,8 +133,8 @@ ProductRoutes.delete("/remove-from-cart/:id", async (req, res) => {
         const productId = req.params.id;
         const user = await User.findOne({ "email": "denisshingala@gmail.com" });
         if (user) {
-            const cart = user.cart.items.filter((item) => {
-                item.productId != productId;
+            const cart = user.cart.items.filter((product) => {
+                return product.productId != productId;
             });
             await User.findByIdAndUpdate(user, { $set: { cart: { items: cart } } })
                 .then(() => {
@@ -147,6 +144,71 @@ ProductRoutes.delete("/remove-from-cart/:id", async (req, res) => {
                     console.error(error);
                     res.status(500).json({ message: "Something went wrong !!", "status": 500 })
                 })
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+    }
+})
+
+ProductRoutes.post("/place-order", async (req, res) => {
+    try {
+        const user = await User.findOne({ "email": "denisshingala@gmail.com" }).populate("cart.items.productId");
+        if (user) {
+            const items = user.cart.items;
+            const orderItems = items.map((item) => {
+                return {
+                    productId: item.productId._id,
+                    quantity: item.quantity,
+                    productPrice: item.productId.productPrice
+                }
+            });
+            new Orders({ userId: user._id, items: orderItems }).save()
+                .then(async () => {
+                    await User.findOneAndUpdate({ email: "denisshingala@gmail.com" }, { $set: { cart: { items: [] } } })
+                        .then(() => {
+                            res.status(200).json({ message: "Order has been placed!" });
+                        })
+                        .catch((error) => {
+                            console.error(error);
+                            res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+                        })
+                })
+                .catch((error) => {
+                    console.error(error);
+                    res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+                })
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+    }
+})
+
+ProductRoutes.get("/order-history", async (req, res) => {
+    try {
+        const user = await User.findOne({ email: "denisshingala@gmail.com" });
+        if (user) {
+            const orders = await Orders.find({ "userId": user._id }).populate("items.productId");
+            const ordersHistory = orders.map((order) => {
+                return {
+                    id: order._id,
+                    products: order.items.map((product) => {
+                        return {
+                            productId: product.productId._id,
+                            productName: product.productId.productName,
+                            productURL: product.productId.productURL,
+                            productPrice: product.productPrice,
+                            orderItem: {
+                                quantity: product.quantity
+                            }
+                        }
+                    })
+                }
+            })
+            res.status(200).json({ message: "Order details!", order: ordersHistory });
+        } else {
+            res.status(500).json({ message: "Unauthorised request!" });
         }
     } catch (error) {
         console.log(error);
