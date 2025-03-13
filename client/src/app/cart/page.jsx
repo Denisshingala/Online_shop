@@ -4,20 +4,22 @@ import Header from '../components/Header/Header'
 import axiosInstance from '../utils/axiosInstance'
 import Loading from '../components/Loading/Loading';
 import CartItemCard from '../components/CartItemCard/CartItemCard';
+import { useRouter } from 'next/navigation';
 
 const Cart = () => {
 
     const [cartItems, setCartItems] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const navigator = useRouter();
 
     useEffect(() => {
         const getCartItem = async () => {
             await axiosInstance.get("/product/get-cart-items")
                 .then((res) => {
-                    if (res.status == 200) {
+                    if (res.data.items) {
                         setCartItems(res.data.items);
                     } else {
-                        console.error("Something went wrong!!");
+                        navigator.push("/");
                     }
                 })
                 .catch((error) => {

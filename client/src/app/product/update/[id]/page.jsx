@@ -17,22 +17,17 @@ const page = () => {
             router.push("/");
         }
         const getProductDetails = async () => {
-            await axiosInstance.get(`/product/details/${id}`)
+            await axiosInstance.get(`/product/edit/details/${id}`)
                 .then((res) => {
-                    if (res.status == 200) {
-                        if (res.data.data == null) {
-                            return router.push("/");
-                        }
+                    if (res.data.data) {
                         setProduct(res.data.data);
+                        setIsLoading(false);
                     } else {
-                        console.error(res.data.message);
+                        router.push("/");
                     }
                 })
                 .catch((error) => {
                     console.error(error);
-                })
-                .finally(() => {
-                    setIsLoading(false);
                 })
         }
         getProductDetails();

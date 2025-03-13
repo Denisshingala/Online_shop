@@ -8,22 +8,10 @@ const axiosInstance = axios.create({
 
 // modify the request
 axiosInstance.interceptors.request.use((config) => {
-    // Check if localStorage is available (only in the client-side)
-    if (typeof window !== "undefined") {
-        const token = localStorage.getItem("token");
-
-        if (token) {
-            try {
-                const accessToken = JSON.parse(token);
-
-                if (accessToken) {
-                    if (config.headers) {
-                        config.headers["Authorization"] = `Bearer ${accessToken}`; // Typically you send the token like this
-                    }
-                }
-            } catch (e) {
-                console.error("Error parsing token from localStorage:", e);
-            }
+    const accessToken = localStorage.getItem("token");
+    if (accessToken) {
+        if (config.headers) {
+            config.headers["Authorization"] = `Bearer ${accessToken}`;
         }
     }
 

@@ -2,22 +2,34 @@ const express = require("express");
 const Products = require("../../models/MongoDB/Products.model");
 const User = require("../../models/MongoDB/Users.model");
 const Orders = require("../../models/MongoDB/Orders.model");
+const authMiddleware = require("../../middleware/auth");
 
 const ProductRoutes = express.Router();
 
 ProductRoutes.get("/all", async (req, res) => {
     try {
         const products = await Products.find();
-        res.status(200).json({ message: "Product Details!", "data": products })
+        res.status(200).json({ message: "Product Details!", data: products })
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+        res.status(500).json({ message: "Something went wrong !!" })
     }
 })
 
-ProductRoutes.post("/add", async (req, res) => {
+ProductRoutes.get("/my-product", authMiddleware, async (req, res) => {
     try {
-        const user = await User.findOne({ email: "denisshingala@gmail.com" });
+        const user = req.user;
+        const products = await Products.find({ userId: user._id });
+        res.status(200).json({ message: "Product Details!", data: products })
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Something went wrong !!" })
+    }
+})
+
+ProductRoutes.post("/add", authMiddleware, async (req, res) => {
+    try {
+        const user = req.user;
         const { productName, productURL, productPrice, productDescription } = req.body;
         const newProduct = new Products({
             productName,
@@ -33,51 +45,91 @@ ProductRoutes.post("/add", async (req, res) => {
             })
             .catch((error) => {
                 console.log(error);
-                res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+                res.status(500).json({ message: "Something went wrong !!" })
             });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+        res.status(500).json({ message: "Something went wrong !!" })
     }
 })
 
-ProductRoutes.get("/details/:id", async (req, res) => {
+ProductRoutes.get("/details/:id", authMiddleware, async (req, res) => {
     try {
         const id = req.params.id;
-        const products = await Products.findById(id);
-        res.status(200).json({ message: "Product Details!", "data": products });
+        const products = await Products.findOne({ _id: id });
+        if (products) {
+            res.status(200).json({ message: "Product Details!", "data": products });
+        } else {
+            res.status(200).json({ message: "Product Details!", "data": [] });
+        }
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+        res.status(500).json({ message: "Something went wrong !!" })
     }
 })
 
-ProductRoutes.put("/update/:id", async (req, res) => {
+ProductRoutes.get("/edit/details/:id", authMiddleware, async (req, res) => {
     try {
+        const user = req.user;
+        const id = req.params.id;
+        const products = await Products.findOne({ _id: id, userId: user._id });
+        if (products) {
+            res.status(200).json({ message: "Product Details!", "data": products });
+        } else {
+            res.status(200).json({ message: "Product not found!" });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Something went wrong !!" })
+    }
+})
+
+ProductRoutes.put("/update/:id", authMiddleware, async (req, res) => {
+    try {
+        const user = req.user;
         const id = req.params.id;
         const body = req.body;
-        const products = await Products.findByIdAndUpdate(id, body);
-        res.status(200).json({ message: "Product Details!", "data": products });
+        const products = await Products.findOneAndUpdate({ _id: id, userId: user._id }, body);
+        if (products) {
+            res.status(200).json({ message: "Product Details!", "data": products });
+        } else {
+            res.status(200).json({ message: "Unauthorized request!", status: 403 });
+        }
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+        res.status(500).json({ message: "Something went wrong !!" })
     }
 })
 
-ProductRoutes.delete("/delete/:id", async (req, res) => {
+ProductRoutes.delete("/delete/:id", authMiddleware, async (req, res) => {
     try {
+        const user = req.user;
         const id = req.params.id;
-        await Products.findByIdAndDelete(id);
-        res.status(200).json({ message: "Product has been deleted!" });
+
+        const product = await Products.findById(id);
+
+        if (user._id != product.userId) {
+            return res.status(403).json({ message: "Unauthorized request!" });
+        }
+
+        Products.findByIdAndDelete(id)
+            .then((product) => {
+                res.status(200).json({ message: "Product has been deleted!", status: 200 });
+            })
+            .catch((error) => {
+                console.log(error);
+                res.status(200).json({ message: "Unauthorized request!", status: 403 });
+            })
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+        res.status(500).json({ message: "Something went wrong !!" })
     }
 })
 
-ProductRoutes.get("/get-cart-items", async (req, res) => {
+ProductRoutes.get("/get-cart-items", authMiddleware, async (req, res) => {
     try {
-        const user = await User.findOne({ email: "denisshingala@gmail.com" }).populate("cart.items.productId");
+        const userData = req.user;
+        const user = await User.findOne({ email: userData.email }).populate("cart.items.productId");
         const items = user.cart.items.map((item) => {
             return {
                 _id: item.productId._id,
@@ -91,14 +143,15 @@ ProductRoutes.get("/get-cart-items", async (req, res) => {
         res.status(200).json({ message: "Cart items!", items: items });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+        res.status(500).json({ message: "Something went wrong !!" })
     }
 })
 
-ProductRoutes.post("/add-to-cart", async (req, res) => {
+ProductRoutes.post("/add-to-cart", authMiddleware, async (req, res) => {
     try {
+        const userData = req.user;
         const { productId } = req.body;
-        const user = await User.findOne({ email: "denisshingala@gmail.com" });
+        const user = await User.findOne({ email: userData.email });
 
         const cartItems = user.cart.items;
         const productIndex = cartItems.findIndex((item) => {
@@ -120,18 +173,19 @@ ProductRoutes.post("/add-to-cart", async (req, res) => {
             })
             .catch((error) => {
                 console.error(error);
-                res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+                res.status(500).json({ message: "Something went wrong !!" })
             });
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+        res.status(500).json({ message: "Something went wrong !!" })
     }
 })
 
-ProductRoutes.delete("/remove-from-cart/:id", async (req, res) => {
+ProductRoutes.delete("/remove-from-cart/:id", authMiddleware, async (req, res) => {
     try {
+        const userData = req.user;
         const productId = req.params.id;
-        const user = await User.findOne({ "email": "denisshingala@gmail.com" });
+        const user = await User.findOne({ "email": userData.email });
         if (user) {
             const cart = user.cart.items.filter((product) => {
                 return product.productId != productId;
@@ -142,18 +196,19 @@ ProductRoutes.delete("/remove-from-cart/:id", async (req, res) => {
                 })
                 .catch((error) => {
                     console.error(error);
-                    res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+                    res.status(500).json({ message: "Something went wrong !!" })
                 })
         }
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+        res.status(500).json({ message: "Something went wrong !!" })
     }
 })
 
-ProductRoutes.post("/place-order", async (req, res) => {
+ProductRoutes.post("/place-order", authMiddleware, async (req, res) => {
     try {
-        const user = await User.findOne({ "email": "denisshingala@gmail.com" }).populate("cart.items.productId");
+        const userData = req.user;
+        const user = await User.findOne({ "email": userData.email }).populate("cart.items.productId");
         if (user) {
             const items = user.cart.items;
             const orderItems = items.map((item) => {
@@ -165,29 +220,30 @@ ProductRoutes.post("/place-order", async (req, res) => {
             });
             new Orders({ userId: user._id, items: orderItems }).save()
                 .then(async () => {
-                    await User.findOneAndUpdate({ email: "denisshingala@gmail.com" }, { $set: { cart: { items: [] } } })
+                    await User.findOneAndUpdate({ email: userData.email }, { $set: { cart: { items: [] } } })
                         .then(() => {
                             res.status(200).json({ message: "Order has been placed!" });
                         })
                         .catch((error) => {
                             console.error(error);
-                            res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+                            res.status(500).json({ message: "Something went wrong !!" })
                         })
                 })
                 .catch((error) => {
                     console.error(error);
-                    res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+                    res.status(500).json({ message: "Something went wrong !!" })
                 })
         }
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+        res.status(500).json({ message: "Something went wrong !!" })
     }
 })
 
-ProductRoutes.get("/order-history", async (req, res) => {
+ProductRoutes.get("/order-history", authMiddleware, async (req, res) => {
     try {
-        const user = await User.findOne({ email: "denisshingala@gmail.com" });
+        const userData = req.user;
+        const user = await User.findOne({ email: userData.email });
         if (user) {
             const orders = await Orders.find({ "userId": user._id }).populate("items.productId");
             const ordersHistory = orders.map((order) => {
@@ -212,7 +268,7 @@ ProductRoutes.get("/order-history", async (req, res) => {
         }
     } catch (error) {
         console.log(error);
-        res.status(500).json({ message: "Something went wrong !!", "status": 500 })
+        res.status(500).json({ message: "Something went wrong !!" })
     }
 })
 

@@ -4,20 +4,22 @@ import Header from '../components/Header/Header'
 import axiosInstance from '../utils/axiosInstance'
 import Loading from '../components/Loading/Loading';
 import Order from '../components/Order/Order';
+import { useRouter } from 'next/navigation';
 
 const orderHistory = () => {
 
     const [isLoading, setIsLoading] = useState(true);
     const [orders, setOrders] = useState([]);
+    const navigator = useRouter();
 
     useEffect(() => {
         const getOrderItems = async () => {
             await axiosInstance.get("product/order-history")
                 .then((res) => {
-                    if (res.status == 200) {
+                    if (res.data.order) {
                         setOrders(res.data.order);
                     } else {
-                        console.error(res.data.message);
+                        navigator.push("/");
                     }
                 })
                 .catch((error) => {

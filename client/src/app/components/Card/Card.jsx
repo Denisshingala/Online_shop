@@ -3,7 +3,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React from "react";
 
-const Card = ({ product, deleteProduct }) => {
+const Card = ({ product, deleteProduct, isEditable, isAuthenticated }) => {
     const router = useRouter();
 
     const addToCart = async (event) => {
@@ -27,12 +27,12 @@ const Card = ({ product, deleteProduct }) => {
             <div className="card-body">
                 <h5 className="card-title">{product.productName}</h5>
                 <p className="card-text" style={{ "minHeight": "50px" }}>{product.productDescription} <br />${product.productPrice}</p>
-                <Link href={`/product/update/${product._id}`} className="btn btn-success form-control my-2">Update details</Link>
+                {isEditable && <Link href={`/product/update/${product._id}`} className="btn btn-success form-control my-2">Update details</Link>}
                 <div className="btn-group w-100" role="group" aria-label="Basic outlined example">
                     <Link href={`/product/details/${product._id}`} className="btn btn-primary form-control">View details</Link>
-                    <button data-id={product._id} onClick={deleteProduct} className="btn btn-danger form-control">Delete</button>
+                    {isEditable && <button data-id={product._id} onClick={deleteProduct} className="btn btn-danger form-control">Delete</button>}
                 </div>
-                <button className="btn btn-secondary form-control my-2" data-id={product._id} onClick={addToCart}>Add to cart</button>
+                {isAuthenticated && <button className="btn btn-secondary form-control my-2" data-id={product._id} onClick={addToCart}>Add to cart</button>}
             </div>
         </div>
     );

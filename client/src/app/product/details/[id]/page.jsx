@@ -12,7 +12,7 @@ const productDetails = () => {
     useEffect(() => {
         axiosInstance.get(`/product/details/${id}`)
             .then((res) => {
-                if (res.status == 200) {
+                if (res.data.data) {
                     setProduct(res.data.data)
                 } else {
                     console.log(res.data.message);

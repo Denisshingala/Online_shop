@@ -6,8 +6,8 @@ const session = require("express-session");
 const cookieParser = require("cookie-parser");
 // const sequelize = require("./utils/mysql/connection");
 // const productRoutes = require("./routes/MySQL/ProductRoutes");
-const userRoutes = require("./routes/MySQL/UserRoutes");
-const User = require("./models/MongoDB/Users.model");
+const authRoutes = require("./routes/MongoDB/AuthRoutes");
+const UserRoutes = require("./routes/MongoDB/UserRoutes");
 
 require("./models/MySQL/associations.model");
 require("dotenv").config();
@@ -27,36 +27,19 @@ app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(session({
     secret: process.env.SESSION_ID,
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
     cookie: {
         secure: false,
         maxAge: 1000 * 60 * 60 * 24
     }
 }));
 
-app.use("/user", userRoutes);
+app.use("/auth", authRoutes);
+app.use("/user", UserRoutes);
 app.use("/product", productRoutes);
-
-// create the default user
-User.findOne({ email: "denisshingala@gmail.com" })
-    .then(async (user) => {
-        if (!user) {
-            user = await new User({
-                username: "Denis",
-                email: "denisshingala@gmail.com",
-                password: "Denis@123",
-                cart: {
-                    items: []
-                }
-            }).save();
-        }
-    })
-    .then(() => {
-        app.listen(8080);
-    }).catch((error) => {
-        console.error(error);
-    });
+    
+app.listen(8080);
 
 // to connect with the mysql database
 // sequelize.sync().then(async () => {
